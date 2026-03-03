@@ -4,9 +4,9 @@ clear all; close all
 disp('load speech: We');
 [sig, fs] = audioread('we.mp3');
 sig = sig(:,1); % ambil satu channel kalau stereo
-save we.dat sig -ascii
-load we.dat % Load speech data at the current folder
-sig = we; % Provided by the instructor
+% save we.dat sig -ascii
+% load we.dat % Load speech data at the current folder
+% sig = we; % Provided by the instructor
 fs=8000; % Sampling rate
 lg=length(sig); % Length of signal vector
 T=1/fs; % Sampling period
@@ -21,14 +21,18 @@ disp('20*log10(k)¼>');
 k = 20*log10(k)
 bits = input('input number of bits ¼>');
 lg = length(sig);
-for x=1:lg
-[Index(x) pq]=biquant(bits, -5,5, sig(x)); %Output quantized index.
-end
-% transmitted
-% received
-for x=1:lg
-qsig(x) = biqtdec(bits, -5,5, Index(x)); %Recover the quantized value
-end
+
+L = 2^bits;
+xmin = -5;
+xmax = 5;
+delta = (xmax - xmin)/L;
+
+Index = floor((sig - xmin)/delta);
+Index(Index < 0) = 0;
+Index(Index > L-1) = L-1;
+
+qsig = xmin + delta*(Index + 0.5);
+
 qerr = sig-qsig; %Calculate the quantized error
 subplot(3,1,1);plot(t,sig);
 ylabel('Original speech');title('we.dat: we');
