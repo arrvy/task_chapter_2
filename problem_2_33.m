@@ -1,66 +1,43 @@
-%% PROBLEM 2.31
-% Quantization of 100 Hz sinusoidal signal using 6-bit bipolar quantizer
-% Sampling rate = 8000 Hz
-% Range = -5 V to 5 V
 
-clear; clc; close all;
+%Example 2.14
+clear all; close all
+disp('load speech: We');
+[sig, fs] = audioread('we.mp3');
+sig = sig(:,1); % ambil satu channel kalau stereo
+save we.dat sig -ascii
+load we.dat % Load speech data at the current folder
+sig = we; % Provided by the instructor
+fs=8000; % Sampling rate
+lg=length(sig); % Length of signal vector
+T=1/fs; % Sampling period
 
-%% 1. Parameter Sampling
-fs = 8000;              % Sampling frequency (Hz)
-Ts = 1/fs;              % Sampling period
-t = 0:Ts:0.05;          % Time vector (50 ms duration)
-
-%% 2. Generate Original Signal
-A = 4.5;                % Amplitude
-f0 = 100;               % Signal frequency (Hz)
-x = A * sin(2*pi*f0*t); % Original signal
-
-%% 3. Quantizer Parameters
-m = 6;                  % Number of bits
-L = 2^m;                % Number of quantization levels
-xmin = -5;              % Minimum input voltage
-xmax = 5;               % Maximum input voltage
-Delta = (xmax - xmin)/L; % Quantization step size
-
-%% 4. Quantization Process
-% Convert signal to level index
-index = round((x - xmin)/Delta);
-
-% Saturation (prevent overflow)
-index(index < 0) = 0;
-index(index > L-1) = L-1;
-
-% Convert back to quantized voltage
-xq = xmin + index * Delta;
-
-%% 5. Quantization Error
-e = x - xq;
-
-%% 6. Compute SNR
-SNR = 10*log10(sum(x.^2) / sum(e.^2));
-
-%% 7. Display Results
-fprintf('Quantization Step (Delta) = %.6f V\n', Delta);
-fprintf('Measured SNR = %.2f dB\n', SNR);
-
-% Theoretical SNR
-SNR_theory = 6.02*m + 1.76;
-fprintf('Theoretical SNR ≈ %.2f dB\n', SNR_theory);
-
-%% 8. Plot Results
-figure;
-plot(t, x, 'b', 'LineWidth', 1.2);
-hold on;
-stairs(t, xq, 'r', 'LineWidth', 1);
-xlabel('Time (s)');
-ylabel('Amplitude (V)');
-title('Original vs Quantized Signal');
-legend('Original Signal','Quantized Signal');
-grid on;
-
-figure;
-plot(t, e);
-xlabel('Time (s)');
-ylabel('Error (V)');
-title('Quantization Error');
-grid on;
+t=[0:1:lg-1]*T; % Time instants in second
+sig=4.5*sig/max(abs(sig)); % Normalizes speech in the range from 4.5 to 4.5
+Xmax = max(abs(sig)); % Maximum amplitude
+Xrms = sqrt( sum(sig .* sig) / length(sig)) % RMS value
+disp('Xrms/Xmax')
+k=Xrms/Xmax
+disp('20*log10(k)¼>');
+k = 20*log10(k)
+bits = input('input number of bits ¼>');
+lg = length(sig);
+for x=1:lg
+[Index(x) pq]=biquant(bits, -5,5, sig(x)); %Output quantized index.
+end
+% transmitted
+% received
+for x=1:lg
+qsig(x) = biqtdec(bits, -5,5, Index(x)); %Recover the quantized value
+end
+qerr = sig-qsig; %Calculate the quantized error
+subplot(3,1,1);plot(t,sig);
+ylabel('Original speech');title('we.dat: we');
+subplot(3,1,2);stairs(t, qsig);grid
+ylabel('Quantized speech')
+subplot(3,1,3);stairs(t, qerr);grid
+ylabel('Quantized error')
+xlabel('Time (sec.)');axis([0 0.25 -1 1]);
+disp('signal to noise ratio due to quantization noise')
+snr(sig,qsig) % Signal to noise ratio in dB:
+% sig ¼ original signal vector,
+% qsig ¼quantized signal vector
