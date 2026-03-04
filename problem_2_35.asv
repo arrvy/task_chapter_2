@@ -1,0 +1,67 @@
+
+clear; clc; close all;
+
+
+%% Parameter Sampling
+Fs = 15;
+Ts = 1/Fs;
+t = (0:Ts:0.001);
+
+
+%% Data
+%fid = fopen('synthetic_seismic.dat','w');
+x = load("synthetic_seismic.dat")
+x = x(:);
+clc;
+%x = synthetic_seismic;
+
+%% Quantizer parameters
+m =[13,18,25,31];
+L = [2^m(1,1), 2^m(1,2), 2^m(1,3), 2^m(1,4)];
+for index = 1:4
+    fprintf("%d ",m(1,index));
+    fprintf("%d\n",L(1,index));
+end
+fprintf("\n");
+xmax = max(abs(x));
+xmin = -xmax;
+fprintf("Max : %.3f \nMin : %.3f \n",xmax,xmin);
+Interval = xmax-xmin
+delta = [Interval/L(1,1),Interval/L(1,2),Interval/L(1,3),Interval/L(1,4)];
+fprintf("Delta is: ");
+for index = 1:4
+fprintf("%g",delta(1,index));
+end
+fprintf("\n");
+
+%% Quantization Process
+indexQuantization = floor((x - xmin)./delta(1,:));
+fprintf("%g\n",delta);
+fprintf('%g ',indexQuantization(1,:)); % Index quant sample 1 / row ke 1 
+xq = xmin + (indexQuantization .* delta);
+
+
+%% Quantization error
+
+e = x - xq;
+
+%% 6. Compute SNR
+SNR = 10*log10(sum(x.^2) ./ sum(e.^2));
+
+%% 7. Display Results
+fprintf('Quantization Step (Delta) = %.g V\n', delta(1,:));
+fprintf('Measured SNR = %.2f dB\n', SNR);
+
+% Theoretical SNR
+SNR_theory = 6.02*m + 1.76;
+fprintf('Theoretical SNR ≈ %.2f dB\n', SNR_theory);
+
+% Error of SNR
+SNR_error = SNR - SNR_theory;
+fprintf('Error in SNR ≈ %.2f dB\n', SNR_error);
+SNR_error_percentage = 100 * SNR_error;
+fprintf("Percentage error = %.2f %\n",SNR)
+
+
+
+
